@@ -403,7 +403,7 @@ func (ss *Sim) ApplyInputs(en env.Env) {
 		inLay.ApplyExt(inPats)
 	}
 	outPats := en.State(outLay.Nm)
-	if inPats != nil {
+	if outPats != nil {
 		outLay.ApplyExt(outPats)
 	}
 }
