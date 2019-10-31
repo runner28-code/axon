@@ -19,13 +19,6 @@ type EcCa1Prjn struct {
 	leabra.Prjn // access as .Prjn
 }
 
-// AsLeabra returns this prjn as a leabra.Prjn -- all derived prjns must redefine
-// this to return the base Prjn type, so that the LeabraPrjn interface does not
-// need to include accessors to all the basic stuff.
-func (pj *EcCa1Prjn) AsLeabra() *leabra.Prjn {
-	return &pj.Prjn
-}
-
 func (pj *EcCa1Prjn) Defaults() {
 	pj.Prjn.Defaults()
 	pj.Prjn.Learn.Norm.On = false     // off by default
@@ -41,7 +34,7 @@ func (pj *EcCa1Prjn) UpdateParams() {
 //  Learn methods
 
 // DWt computes the weight change (learning) -- on sending projections
-// CHL version supported if On
+// Delta version
 func (pj *EcCa1Prjn) DWt() {
 	if !pj.Learn.Learn {
 		return
