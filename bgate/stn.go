@@ -55,10 +55,11 @@ func (ly *STNLayer) Defaults() {
 	// STN is tonically self-active and has no FFFB inhibition
 
 	ly.Act.Init.Vm = 0.9
-	ly.Act.Init.Act = 0.
+	ly.Act.Init.Act = 0.5
 	ly.Act.Erev.L = 0.9
 	ly.Act.Gbar.L = 0.2
 	ly.Inhib.Layer.On = false
+	ly.Inhib.Pool.On = false
 	ly.Inhib.Self.On = true
 	ly.Inhib.Self.Gi = 0.4 // 0.4 in localist one
 	ly.Inhib.ActAvg.Init = 0.25
@@ -69,6 +70,13 @@ func (ly *STNLayer) Defaults() {
 	ly.Act.Dt.GTau = 5 // 5 also works but less smooth RT dist
 	ly.Act.Gbar.L = 0.1
 	ly.Act.Init.Decay = 0
+
+	for _, pji := range ly.RcvPrjns {
+		pj := pji.(leabra.LeabraPrjn).AsLeabra()
+		if _, ok := pj.Send.(*GPLayer); ok { // GPeIn -- others are PFC, 1.5 in orig
+			pj.WtScale.Rel = 0.5
+		}
+	}
 }
 
 // DALayer interface:
@@ -93,8 +101,8 @@ func (ly *STNLayer) InitActs() {
 	ly.DA = 0
 }
 
-func (ly *STNLayer) ActFmG() {
-	for ni := range ly.Neurons { // note: copied from leabra ActFmG
+func (ly *STNLayer) ActFmG(ltime *leabra.Time) {
+	for ni := range ly.Neurons { // note: copied from leabra ActFmG, not calling it..
 		nrn := &ly.Neurons[ni]
 		if nrn.IsOff() {
 			continue
