@@ -42,7 +42,7 @@ type Sim struct {
 	RiseTau   float64       `desc:"rise time constant"`
 	DecayTau  float64       `desc:"decay time constant -- must NOT be same as RiseTau"`
 	GsXInit   float64       `desc:"initial value of GsX driving variable at point of synaptic input onset -- decays expoentially from this start"`
-	MaxTime   float64       `inactive:"+" desc:"time when peak conductance occurs"`
+	MaxTime   float64       `inactive:"+" desc:"time when peak conductance occurs, in TimeInc units"`
 	TauFact   float64       `inactive:"+" desc:"time constant factor used in integration: (Decay / Rise) ^ (Rise / (Decay - Rise))"`
 	TimeSteps int           `desc:"total number of time steps to take"`
 	TimeInc   float64       `desc:"time increment per step"`
@@ -74,6 +74,7 @@ func (ss *Sim) Config() {
 func (ss *Sim) Update() {
 	ss.TauFact = math.Pow(ss.DecayTau/ss.RiseTau, ss.RiseTau/(ss.DecayTau-ss.RiseTau))
 	ss.MaxTime = ss.TimeInc * ((ss.RiseTau * ss.DecayTau) / (ss.DecayTau - ss.RiseTau)) * math.Log(ss.DecayTau/ss.RiseTau)
+	ss.MaxTime /= ss.TimeInc
 }
 
 // Run runs the equation.
