@@ -290,7 +290,6 @@ class Sim(pygiv.ClassViewObj):
         """
         Config configures all the elements using the standard functions
         """
-
         ss.InitParams()
         ss.OpenPats()
         ss.ConfigEnv()
@@ -1093,7 +1092,7 @@ class Sim(pygiv.ClassViewObj):
         nlast = 5
         if nlast > epcix.Len()-1:
             nlast = epcix.Len() - 1
-        epcix.Idxs = go.Slice_int(epcix.Idxs[epcix.Len()-nlast:])
+        epcix.Idxs = epcix.Idxs[epcix.Len()-nlast:]
 
         params = ss.RunName() # includes tag
 
