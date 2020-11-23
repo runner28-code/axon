@@ -4,22 +4,7 @@
 # Use of this source code is governed by a BSD-style
 # license that can be found in the LICENSE file.
 
-# use:
-# pyleabra -i ra25.py 
-# to run in gui interactive mode from the command line (or pyleabra, import ra25)
-# see main function at the end for startup args
-
-# to run this python version of the demo:
-# * install gopy, currently in fork at https://github.com/goki/gopy
-#   e.g., 'go get github.com/goki/gopy -u ./...' and then cd to that package
-#   and do 'go install'
-# * go to the python directory in this emergent repository, read README.md there, and 
-#   type 'make' -- if that works, then type make install (may need sudo)
-# * cd back here, and run 'pyemergent' which was installed into /usr/local/bin
-# * then type 'import ra25' and this should run
-# * you'll need various standard packages such as pandas, numpy, matplotlib, etc
-
-# labra25ra runs a simple random-associator 5x5 = 25 four-layer leabra network
+# hip project
 
 from leabra import go, leabra, emer, relpos, eplot, env, agg, patgen, prjn, etable, efile, split, etensor, params, netview, rand, erand, gi, giv, pygiv, pyparams, mat32, hip
 
@@ -32,12 +17,6 @@ from datetime import datetime, timezone
 # matplotlib.use('SVG')
 # import matplotlib.pyplot as plt
 # plt.rcParams['svg.fonttype'] = 'none'  # essential for not rendering fonts as paths
-
-# note: pandas, xarray or pytorch TensorDataSet can be used for input / output
-# patterns and recording of "log" data for plotting.  However, the etable.Table
-# has better GUI and API support, and handles tensor columns directly unlike
-# pandas.  Support for easy migration between these is forthcoming.
-# import pandas as pd
 
 # this will become Sim later.. 
 TheSim = 1
@@ -1504,9 +1483,6 @@ class Sim(pygiv.ClassViewObj):
         nv = netview.NetView()
         tv.AddTab(nv, "NetView")
         nv.Var = "Act"
-        # nv.Params.ColorMap = "Jet" // default is ColdHot
-        # which fares pretty well in terms of discussion here:
-        # https://matplotlib.org/tutorials/colors/colormaps.html
         nv.SetNet(ss.Net)
         ss.NetView = nv
         nv.ViewDefaults()
