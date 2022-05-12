@@ -67,20 +67,20 @@ const LogPrec = 4
 // as arguments to methods, and provides the core GUI interface (note the view tags
 // for the fields which provide hints to how things should be displayed).
 type Sim struct {
-	Net          *axon.Network `view:"no-inline" desc:"the network -- click to view / edit parameters for layers, prjns, etc"`
-	Params       emer.Params   `view:"inline" desc:"all parameter management"`
-	Tag          string        `desc:"extra tag string to add to any file names output from sim (e.g., weights files, log files, params for run)"`
-	Loops        looper.Set    `view:"no-inline" desc:"contains looper control loops for running sim"`
-	Stats        estats.Stats  `desc:"contains computed statistic values"`
-	Logs         elog.Logs     `desc:"Contains all the logs and information about the logs.'"`
-	Pats         *etable.Table `view:"no-inline" desc:"the training patterns to use"`
-	Envs         envlp.Envs    `view:"no-inline" desc:"Environments"`
-	Time         axon.Time     `desc:"axon timing parameters and state"`
-	ViewOn       bool          `desc:"whether to update the network view while running"`
-	TrainUpdt    etime.Times   `desc:"at what time scale to update the display during training?  Anything longer than Epoch updates at Epoch in this model"`
-	TestUpdt     etime.Times   `desc:"at what time scale to update the display during testing?  Anything longer than Epoch updates at Epoch in this model"`
-	TestInterval int           `desc:"how often to run through all the test patterns, in terms of training epochs -- can use 0 or -1 for no testing"`
-	PCAInterval  int           `desc:"how frequently (in epochs) to compute PCA on hidden representations to measure variance?"`
+	Net          *axon.Network   `view:"no-inline" desc:"the network -- click to view / edit parameters for layers, prjns, etc"`
+	Params       emer.Params     `view:"inline" desc:"all parameter management"`
+	Tag          string          `desc:"extra tag string to add to any file names output from sim (e.g., weights files, log files, params for run)"`
+	Loops        *looper.Manager `view:"no-inline" desc:"contains looper control loops for running sim"`
+	Stats        estats.Stats    `desc:"contains computed statistic values"`
+	Logs         elog.Logs       `desc:"Contains all the logs and information about the logs.'"`
+	Pats         *etable.Table   `view:"no-inline" desc:"the training patterns to use"`
+	Envs         envlp.Envs      `view:"no-inline" desc:"Environments"`
+	Time         axon.Time       `desc:"axon timing parameters and state"`
+	ViewOn       bool            `desc:"whether to update the network view while running"`
+	TrainUpdt    etime.Times     `desc:"at what time scale to update the display during training?  Anything longer than Epoch updates at Epoch in this model"`
+	TestUpdt     etime.Times     `desc:"at what time scale to update the display during testing?  Anything longer than Epoch updates at Epoch in this model"`
+	TestInterval int             `desc:"how often to run through all the test patterns, in terms of training epochs -- can use 0 or -1 for no testing"`
+	PCAInterval  int             `desc:"how frequently (in epochs) to compute PCA on hidden representations to measure variance?"`
 
 	GUI         egui.GUI  `view:"-" desc:"manages all the gui elements"`
 	Args        ecmd.Args `view:"no-inline" desc:"command line args"`
@@ -144,8 +144,6 @@ func (ss *Sim) ConfigEnv() {
 	trn.Nm = "TrainEnv"
 	trn.Dsc = "training params and state"
 	trn.Config(etable.NewIdxView(ss.Pats), etime.Train.String())
-	trn.Counter(etime.Run).Max = ss.Args.Int("runs")
-	trn.Counter(etime.Epoch).Max = ss.Args.Int("epochs")
 	trn.Validate()
 
 	tst.Nm = "TestEnv"
@@ -276,126 +274,204 @@ func (ss *Sim) UpdateNetViewTime(time etime.Times) {
 	}
 }
 
-// ConfigLoops configures the control loops
-func (ss *Sim) ConfigLoops() {
-	nogui := ss.Args.Bool("nogui")
-	trn := looper.NewStackEnv(ss.Envs.ByMode(etime.Train))
-	tst := looper.NewStackEnv(ss.Envs.ByMode(etime.Test))
-	ss.Loops.AddStack(trn)
-	ss.Loops.AddStack(tst)
-	axon.ConfigLoopsStd(&ss.Loops, ss.Net, &ss.Time, 150, 50)
-	// note: AddCycle0 adds in reverse order of where things end up!
-	axon.AddCycle0(&ss.Loops, &ss.Time, "Sim:ApplyInputs", ss.ApplyInputs)
-	axon.AddCycle0(&ss.Loops, &ss.Time, "Sim:NewRun", func() {
-		if ss.NeedsNewRun {
-			ss.NewRun()
-		}
-	})
-	// note: AddLoopCycle adds in reverse order of where things end up!
-	if !nogui { // todo: cmdline
-		axon.AddLoopCycle(&ss.Loops, "GUI:UpdateNetView", ss.UpdateNetViewCycle)
-		axon.AddLoopCycle(&ss.Loops, "GUI:RasterRec", ss.RasterRec)
+func (ss *Sim) SaveStateBeta() {
+	switch ss.Time.Cycle {
+	// save states at beta-frequency -- not used computationally
+	case 75:
+		ss.Net.ActSt1(&ss.Time)
+	case 100:
+		ss.Net.ActSt2(&ss.Time)
 	}
-	tst.Loop(etime.Cycle).Main.InsertAfter("Axon:Cycle:Run", "Log:Test:Cycle", func() {
-		ss.Log(etime.Test, etime.Cycle)
-	})
-	axon.AddLoopCycle(&ss.Loops, "Sim:SaveState", func() {
-		if ss.Time.Phase == 0 {
-			switch ss.Time.Cycle { // save states at beta-frequency -- not used computationally
-			case 75:
-				ss.Net.ActSt1(&ss.Time)
-			case 100:
-				ss.Net.ActSt2(&ss.Time)
-			}
-		}
-	})
-	axon.AddLoopCycle(&ss.Loops, "Sim:StatCounters", ss.StatCounters) // add last so comes first!
-
-	axon.AddPhaseMain(&ss.Loops, "Sim:TrialStats", func() {
-		if ss.Time.Phase == 1 {
-			ss.TrialStats()
-		}
-	})
-	if !nogui {
-		// after dwt updated, grab it
-		trn.Loop(etime.Phase).End.Add("GUI:UpdateNetView", ss.UpdateNetViewCycle)
-		tst.Loop(etime.Phase).End.Add("GUI:UpdatePlot", func() {
-			ss.GUI.UpdatePlot(etime.Test, etime.Cycle) // make sure always updated at end
-		})
-	}
-
-	// prepend = before counter is incremented
-	trn.Loop(etime.Trial).Main.Prepend("Log:Train:Trial", func() {
-		ss.Log(etime.Train, etime.Trial)
-	})
-	trn.Loop(etime.Epoch).Main.Prepend("Log:Train:Epoch", func() {
-		epc := ss.Envs.ByMode(etime.Train).Counter(etime.Epoch).Cur
-		if (ss.TestInterval > 0) && (epc%ss.TestInterval == 0) { // note: epc is *next* so won't trigger first time
-			ss.TestAll()
-		}
-		ss.Log(etime.Train, etime.Epoch)
-	})
-
-	trn.Loop(etime.Epoch).Stop.Add("Epoch:NZeroStop", func() bool { // early stopping
-		nzero := ss.Args.Int("nzero")
-		return nzero > 0 && ss.Stats.Int("NZero") >= nzero
-	})
-
-	trn.Loop(etime.Run).Main.Prepend("Log:Train:Run", func() {
-		swts := ss.Args.Bool("wts")
-		ss.Log(etime.Train, etime.Run)
-		if swts {
-			fnm := ss.WeightsFileName()
-			fmt.Printf("Saving Weights to: %s\n", fnm)
-			ss.Net.SaveWtsJSON(gi.FileName(fnm))
-		}
-		ss.NeedsNewRun = true // next step will trigger new init
-	})
-
-	tst.Loop(etime.Trial).Main.Add("Log:Test:Trial", func() {
-		ss.Log(etime.Test, etime.Trial)
-		ss.GUI.NetDataRecord()
-	})
-	tst.Loop(etime.Epoch).Main.Add("Log:Test:Epoch", func() {
-		ss.Log(etime.Test, etime.Epoch)
-	})
-
-	if !nogui {
-		trn.Loop(etime.Trial).Main.Prepend("GUI:UpdateNetView", func() {
-			ss.UpdateNetViewTime(etime.Trial)
-		})
-		trn.Loop(etime.Epoch).Main.Prepend("GUI:UpdateNetView", func() {
-			ss.UpdateNetViewTime(etime.Epoch)
-		})
-		tst.Loop(etime.Trial).Main.Prepend("GUI:UpdateNetView", func() {
-			ss.UpdateNetViewTime(etime.Trial)
-		})
-		tst.Loop(etime.Epoch).Main.Prepend("GUI:UpdateNetView", func() {
-			ss.UpdateNetViewTime(etime.Epoch)
-		})
-	}
-
-	fmt.Println(trn.DocString())
-	fmt.Println(tst.DocString())
 }
 
-/*
-	ss.Net.InitExt()
-	for cyc := 0; cyc < ss.ITICycles; cyc++ { // do the plus phase
-		ss.Net.Cycle(&ss.Time)
-		// ss.StatCounters(train)
-		if !train {
-			ss.Log(etime.Test, etime.Cycle)
+func (ss *Sim) SaveWeightsToJSON() {
+	swts := ss.Args.Bool("wts")
+	if swts {
+		fnm := ss.WeightsFileName()
+		fmt.Printf("Saving Weights to: %s\n", fnm)
+		ss.Net.SaveWtsJSON(gi.FileName(fnm))
+	}
+}
+
+func (ss *Sim) AddDefaultLoopSimLogic(manager *looper.Manager) {
+	// Net Cycle
+	for m, _ := range manager.Stacks {
+		manager.Stacks[m].Loops[etime.Cycle].Main.Add("Axon:Cycle:RunAndIncrement", func() {
+			ss.Net.Cycle(&ss.Time)
+			ss.Time.CycleInc()
+		})
+	}
+
+	// Weight updates.
+	// Note that the substring "UpdateNetView" in the name is important here, because it's checked in AddDefaultGUICallbacks.
+	manager.GetLoop(etime.Train, etime.Trial).OnEnd.Add("Axon:Event:UpdateWeightsAndUpdateNetView" /*DO NOT CHANGE NAME*/, func() {
+		ss.Net.DWt(&ss.Time)
+		// Need to update the GUI here because WtFmDWt clears some values as a side effect. This may seem like an unnecessary optimization, but clearing those values is expensive.
+		if ss.Args.Bool("nogui") == false {
+			ss.UpdateNetViewTime(etime.Trial)
 		}
-		if ss.GUI.Active {
-			ss.RasterRec()
-		}
-		ss.Time.CycleInc()
-		if ss.ViewOn {
-			ss.UpdateViewTime(train, viewUpdt)
+		ss.Net.WtFmDWt(&ss.Time)
+	})
+
+	// Set variables on ss that are referenced elsewhere, such as ApplyInputs.
+	for m, loops := range manager.Stacks {
+		curMode := m // For closures.
+		for t, loop := range loops.Loops {
+			curTime := t
+			loop.OnStart.Add(curMode.String()+":"+curTime.String()+":"+"SetTimeVal", func() {
+				ss.Time.Mode = curMode.String()
+			})
 		}
 	}
-*/
+
+	// Add Testing
+	trainEpoch := manager.GetLoop(etime.Train, etime.Epoch)
+	trainEpoch.OnStart.Add("Log:Train:TestAtInterval", func() {
+		if (ss.TestInterval > 0) && ((trainEpoch.Counter.Cur+1)%ss.TestInterval == 0) {
+			// Note the +1 so that it doesn't occur at the 0th timestep.
+			ss.TestAll()
+		}
+	})
+}
+
+func (ss *Sim) AddDefaultLoggingCallbacks(manager *looper.Manager) {
+	for m, loops := range manager.Stacks {
+		curMode := m // For closures.
+		for t, loop := range loops.Loops {
+			curTime := t
+
+			// Actual logging
+			loop.OnEnd.Add(curMode.String()+":"+curTime.String()+":"+"Log", func() {
+				ss.Log(curMode, curTime)
+			})
+
+			// Reset logs at level one deeper
+			levelToReset := etime.AllTimes
+			for i, tt := range loops.Order {
+				if tt == t && i+1 < len(loops.Order) {
+					levelToReset = loops.Order[i+1]
+				}
+			}
+			if levelToReset != etime.AllTimes {
+				loop.OnEnd.Add(curMode.String()+":"+curTime.String()+":"+"ResetLog"+levelToReset.String(), func() {
+					ss.Logs.ResetLog(curMode, levelToReset)
+				})
+			}
+		}
+
+		// Save State
+		manager.GetLoop(curMode, etime.Cycle).OnEnd.Add("Sim:SaveState", ss.SaveStateBeta)
+	}
+}
+
+func (ss *Sim) AddDefaultGUICallbacks(manager *looper.Manager) {
+	for _, m := range []etime.Modes{etime.Train, etime.Test} {
+		curMode := m // For closures.
+		for _, t := range []etime.Times{etime.Trial, etime.Epoch} {
+			curTime := t
+			if manager.GetLoop(curMode, curTime).OnEnd.HasNameLike("UpdateNetView") {
+				// There might be a case where another function also Updates the NetView, and we don't want to do it twice. In particular, Net.WtFmDWt clears some values at the end of Trial, and it wants to update the view before doing so.
+				continue
+			}
+			manager.GetLoop(curMode, curTime).OnEnd.Add("GUI:UpdateNetView", func() {
+				ss.UpdateNetViewTime(curTime)
+			})
+		}
+	}
+}
+
+func (ss *Sim) ConfigLoops() {
+	// Add Train and Test
+	manager := looper.Manager{}.Init()
+	manager.Stacks[etime.Train] = &looper.Stack{}
+	manager.Stacks[etime.Test] = &looper.Stack{}
+
+	// Specify Timescales: Run, Epoch, Trial, Cycle along with durations
+	manager.Stacks[etime.Train].Init().AddTime(etime.Run, 10).AddTime(etime.Epoch, 100).AddTime(etime.Trial, 30).AddTime(etime.Cycle, 200)
+	manager.Stacks[etime.Test].Init().AddTime(etime.Epoch, 1).AddTime(etime.Trial, 30).AddTime(etime.Cycle, 200) // No Run
+
+	// Plus and Minus with Length of each, start and end logic
+	minusPhase := looper.Event{Name: "MinusPhase", AtCtr: 0}
+	minusPhase.OnEvent.Add("Sim:MinusPhase:Start", func() {
+		ss.Time.PlusPhase = false
+		ss.Time.NewPhase(false)
+	})
+	plusPhase := looper.Event{Name: "PlusPhase", AtCtr: 150}
+	plusPhase.OnEvent.Add("Sim:MinusPhase:End", func() { ss.Net.MinusPhase(&ss.Time) })
+	plusPhase.OnEvent.Add("Sim:PlusPhase:Start", func() {
+		ss.Time.PlusPhase = true
+		ss.Time.NewPhase(true)
+	})
+	plusPhaseEnd := looper.Event{Name: "PlusPhase", AtCtr: 199}
+	plusPhaseEnd.OnEvent.Add("Sim:PlusPhase:End", func() { ss.Net.PlusPhase(&ss.Time) })
+	// Add both to train and test, by copy
+	manager.AddEventAllModes(etime.Cycle, minusPhase)
+	manager.AddEventAllModes(etime.Cycle, plusPhase)
+	manager.AddEventAllModes(etime.Cycle, plusPhaseEnd)
+
+	// Trial Stats and Apply Input
+	for m, _ := range manager.Stacks {
+		mode := m // For closures
+		stack := manager.Stacks[m]
+		stack.Loops[etime.Trial].OnStart.Add("Sim:ResetState", func() {
+			ss.Net.NewState()
+			ss.Time.NewState(mode.String())
+		})
+		stack.Loops[etime.Trial].OnStart.Add("Sim:ApplyInputs", ss.ApplyInputs)
+		stack.Loops[etime.Trial].OnEnd.Add("Sim:StatCounters", ss.StatCounters)
+		stack.Loops[etime.Trial].OnEnd.Add("Sim:TrialStats", ss.TrialStats)
+		stack.Loops[etime.Trial].OnEnd.Add("Sim:Env:Step", func() {
+			ss.Envs[mode.String()].Step()
+		})
+	}
+
+	// Reinitialize Run
+	manager.GetLoop(etime.Train, etime.Run).OnStart.Add("Sim:NewRun", ss.NewRun)
+
+	// Run end early condition
+	manager.GetLoop(etime.Train, etime.Run).IsDone["Epoch:NZeroStop"] = func() bool {
+		// This is calculated in TrialStats
+		nzero := ss.Args.Int("nzero")
+		curNZero := ss.Stats.Int("NZero")
+		return nzero > 0 && curNZero >= nzero
+	}
+
+	// Add default Sim and network logic
+	ss.AddDefaultLoopSimLogic(manager)
+
+	//////////////////
+	// Logging stuff
+
+	ss.AddDefaultLoggingCallbacks(manager)
+
+	// Save weights to file, to look at later
+	manager.GetLoop(etime.Train, etime.Run).OnEnd.Add("Log:Train:SaveWeights", ss.SaveWeightsToJSON)
+
+	/////////////////
+	// GUI Stuff
+	if ss.Args.Bool("nogui") == false {
+		ss.AddDefaultGUICallbacks(manager)
+
+		for mode, _ := range manager.Stacks {
+			manager.GetLoop(mode, etime.Cycle).OnStart.Add("GUI:UpdateNetView", ss.UpdateNetViewCycle)
+			manager.GetLoop(mode, etime.Cycle).OnStart.Add("GUI:RasterRec", ss.RasterRec)
+		}
+		for _, event := range manager.GetLoop(etime.Train, etime.Cycle).Events {
+			event.OnEvent.Add("GUI:UpdateNetView", ss.UpdateNetViewCycle)
+			event.OnEvent.Add("GUI:UpdatePlot", func() {
+				ss.GUI.UpdatePlot(etime.Test, etime.Cycle) // make sure always updated at end
+			})
+		}
+		manager.GetLoop(etime.Test, etime.Trial).Main.Add("Log:Test:Trial", func() {
+			ss.GUI.NetDataRecord()
+		})
+	}
+
+	// Initialize and print loop structure, then add to Sim
+	manager.Init()
+	fmt.Println(manager.DocString())
+	ss.Loops = manager
+}
 
 // ApplyInputs applies input patterns from given environment.
 // It is good practice to have this be a separate method with appropriate
@@ -431,12 +507,6 @@ func (ss *Sim) NewRun() {
 	ss.NeedsNewRun = false
 }
 
-// Stop tells the sim to stop running
-func (ss *Sim) Stop() {
-	ss.GUI.StopNow = true
-	ss.Loops.StopFlag = true
-}
-
 // Stopped is called when a run method stops running
 // updates the IsRunning flag and toolbar
 func (ss *Sim) Stopped() {
@@ -452,9 +522,9 @@ func (ss *Sim) SaveWeights(filename gi.FileName) {
 // TestAll runs through the full set of testing items
 func (ss *Sim) TestAll() {
 	ss.Envs.ByMode(etime.Test).Init()
-	tst := ss.Loops.Stack(etime.Test)
-	tst.Init()
-	tst.Run()
+	ss.Loops.Mode = etime.Test
+	ss.Loops.Run()
+	ss.Loops.Mode = etime.Train // Important to reset Mode back to Train because this is called from within the Train Run.
 }
 
 /////////////////////////////////////////////////////////////////////////
@@ -508,6 +578,11 @@ func (ss *Sim) StatCounters() {
 		return
 	}
 	ev.CtrsToStats(&ss.Stats)
+	// Set counters correctly, overwriting what CtrsToStats does
+	for t, l := range ss.Loops.Stacks[ss.Loops.Mode].Loops {
+		ss.Stats.SetInt(t.String(), l.Counter.Cur)
+	}
+
 	ss.Stats.SetInt("Cycle", ss.Time.Cycle)
 	ss.GUI.NetViewText = ss.Stats.Print([]string{"Run", "Epoch", "Trial", "TrialName", "Cycle", "TrlUnitErr", "TrlErr", "TrlCosDiff"})
 }
@@ -546,7 +621,7 @@ func (ss *Sim) ConfigLogs() {
 // Log is the main logging function, handles special things for different scopes
 func (ss *Sim) Log(mode etime.Modes, time etime.Times) {
 	if mode.String() != "Analyze" {
-		ss.Time.Mode = mode.String()
+		ss.Time.Mode = mode.String() // Also set specifically in a Loop callback.
 	}
 	ss.StatCounters()
 	dt := ss.Logs.Table(mode, time)
@@ -691,17 +766,7 @@ func (ss *Sim) ConfigGui() *gi.Window {
 		},
 	})
 
-	ss.GUI.AddToolbarItem(egui.ToolbarItem{Label: "Stop",
-		Icon:    "stop",
-		Tooltip: "Interrupts running.  running / stepping picks back up where it left off.",
-		Active:  egui.ActiveRunning,
-		Func: func() {
-			ss.Stop()
-		},
-	})
-
-	ss.GUI.AddLooperCtrl(ss.Loops.Stack(etime.Train))
-	ss.GUI.AddLooperCtrl(ss.Loops.Stack(etime.Test))
+	ss.GUI.AddLooperCtrl(ss.Loops, []etime.Modes{etime.Train, etime.Test})
 
 	////////////////////////////////////////////////
 	ss.GUI.ToolBar.AddSeparator("log")
@@ -799,7 +864,7 @@ func (ss *Sim) CmdArgs() {
 	rc.Set(run)
 	rc.Max = run + runs
 	ss.NewRun()
-	ss.Loops.Run(etime.Train)
+	ss.Loops.Run()
 
 	ss.Logs.CloseLogFiles()
 
