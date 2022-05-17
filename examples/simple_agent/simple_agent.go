@@ -91,7 +91,8 @@ func (ss *Sim) ConfigLoops() *looper.Manager {
 	manager.Stacks[etime.Train] = &looper.Stack{}
 	manager.Stacks[etime.Train].Init().AddTime(etime.Run, 1).AddTime(etime.Epoch, 100).AddTime(etime.Trial, 100).AddTime(etime.Cycle, 200)
 
-	_, plusPhase, _ := axon.AddPlusAndMinusPhases(manager, &ss.Time, ss.Net.AsAxon())
+	axon.AddPlusAndMinusPhases(manager, &ss.Time, ss.Net.AsAxon())
+	plusPhase := &manager.GetLoop(etime.Train, etime.Cycle).Events[1]
 	plusPhase.OnEvent.Add("Sim:PlusPhase:SendActionsThenStep", func() {
 		// Check the action at the beginning of the Plus phase, before the teaching signal is introduced.
 		axon.SendActionAndStep(ss.Net.AsAxon(), ss.WorldEnv)
