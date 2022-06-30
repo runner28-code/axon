@@ -7,6 +7,7 @@ package kinase
 import "github.com/goki/ki/kit"
 
 // Rules are different options for Kinase-based learning rules
+// These are now implemented using separate Prjn types in kinasex
 type Rules int32
 
 //go:generate stringer -type=Rules
