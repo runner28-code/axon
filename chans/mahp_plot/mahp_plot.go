@@ -37,7 +37,7 @@ const LogPrec = 4
 
 // Sim holds the params, table, etc
 type Sim struct {
-	MAHP       chans.MAHPParams `desc:"mAHP function"`
+	Mahp       chans.MahpParams `view:"inline" desc:"mAHP function"`
 	Vstart     float32          `def:"-100" desc:"starting voltage"`
 	Vend       float32          `def:"100" desc:"ending voltage"`
 	Vstep      float32          `def:"1" desc:"voltage increment"`
@@ -59,8 +59,8 @@ var TheSim Sim
 
 // Config configures all the elements using the standard functions
 func (ss *Sim) Config() {
-	ss.MAHP.Defaults()
-	ss.MAHP.Gbar = 1
+	ss.Mahp.Defaults()
+	ss.Mahp.Gbar = 1
 	ss.Vstart = -100
 	ss.Vend = 100
 	ss.Vstep = 1
@@ -85,7 +85,7 @@ func (ss *Sim) VmRun() {
 	ss.Update()
 	dt := ss.Table
 
-	mp := &ss.MAHP
+	mp := &ss.Mahp
 
 	nv := int((ss.Vend - ss.Vstart) / ss.Vstep)
 	dt.SetNumRows(nv)
@@ -131,7 +131,7 @@ func (ss *Sim) TimeRun() {
 	ss.Update()
 	dt := ss.TimeTable
 
-	mp := &ss.MAHP
+	mp := &ss.Mahp
 
 	n, _ := mp.NinfTauFmV(ss.TimeVstart)
 	kna := float32(0)
