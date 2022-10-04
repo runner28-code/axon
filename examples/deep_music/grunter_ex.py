@@ -163,7 +163,7 @@ def write_sbatch_header(f):
     f.write("#SBATCH --ntasks=" + str(tasks) + "\n")
     f.write("#SBATCH --cpus-per-task=" + str(cpus_per_task) + "\n")
     f.write("#SBATCH --ntasks-per-node=" + str(tasks_per_node) + "\n")
-    f.write("#SBATCH --exclude=agate-[2,4-7,37-40]\n")
+    # f.write("#SBATCH --exclude=agate-[2,4-7,37-40]\n")
     # f.write("#SBATCH --qos=" + qos + "\n")
     # f.write("#SBATCH --partition=" + partition + "\n")
     f.write("#SBATCH --mail-type=FAIL\n")
