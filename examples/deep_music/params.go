@@ -32,7 +32,7 @@ var ParamSets = params.Sets{
 				}},
 			{Sel: ".InLay", Desc: "input layers need more inhibition",
 				Params: params.Params{
-					"Layer.Inhib.ActAvg.Init": "0.08", // 0.08 for 12 notes, 0.05 for 18
+					"Layer.Inhib.ActAvg.Init": "0.025", // 0.08 for 12 notes, 0.05 for 18
 				}},
 			{Sel: ".CT", Desc: "CT NMDA gbar factor is key",
 				Params: params.Params{
@@ -80,10 +80,10 @@ var ParamSets = params.Sets{
 			// Projections below
 			{Sel: "Prjn", Desc: "std",
 				Params: params.Params{
-					"Prjn.Learn.Lrate.Base":   "0.02", // if ctxt = 0.002 then .02 or .01 is best
-					"Prjn.SWt.Adapt.Lrate":    "0.01", // 0.01 == 0.0001 but 0.001 not as good..
-					"Prjn.SWt.Adapt.DreamVar": "0.0",  // 0.01 is just tolerable
-					"Prjn.SWt.Init.SPct":      "1.0",  // 1 works fine here -- .5 also ok
+					"Prjn.Learn.Lrate.Base":   "0.005", // if ctxt = 0.002 then .02 or .01 is best
+					"Prjn.SWt.Adapt.Lrate":    "0.01",  // 0.01 == 0.0001 but 0.001 not as good..
+					"Prjn.SWt.Adapt.DreamVar": "0.0",   // 0.01 is just tolerable
+					"Prjn.SWt.Init.SPct":      "1.0",   // 1 works fine here -- .5 also ok
 					"Prjn.Com.PFail":          "0.0",
 					"Prjn.Learn.Trace.Tau":    "4", // 4 == 2 > 1
 				}},
@@ -97,7 +97,7 @@ var ParamSets = params.Sets{
 				}},
 			{Sel: ".CTCtxt", Desc: "all CT context prjns",
 				Params: params.Params{
-					"Prjn.Learn.Lrate.Base": "0.002", // 0.002 > 0.001 > 0.005 higher
+					"Prjn.Learn.Lrate.Base": "0.001", // 0.002 > 0.001 > 0.005 higher
 					"Prjn.Trace":            "false", // not as good with Trace here..
 					"Prjn.Com.PFail":        "0.0",   // .2, .3 too high -- very slow learning
 				}},

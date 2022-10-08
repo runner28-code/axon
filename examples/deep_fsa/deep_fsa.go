@@ -160,8 +160,9 @@ func (ss *Sim) ConfigNet(net *deep.Network) {
 	// one2one := prjn.NewOneToOne()
 	// _ = one2one
 
-	hid, hidct := net.AddSuperCT2D("Hidden", 10, 10, 2, full) // full > one2one
-	hidct.Shape().SetShape([]int{10, 20}, nil, nil)           // 200 == 500 == 1000 >> 100 here!
+	hid, hidct := net.AddSuperCT2D("Hidden", 10, 10, 2, full)
+	// full > one2one -- one2one weights go to 0 -- this is key for more posterior-cortical CT
+	// hidct.Shape().SetShape([]int{10, 20}, nil, nil) // 200 == 500 == 1000 >> 100 here!
 	// note: tried 4D 6,6,2,2 with pool 1to1 -- not better
 	// also 12,12 not better than 10,10
 
@@ -565,7 +566,7 @@ func (ss *Sim) ConfigGui() *gi.Window {
 		Tooltip: "Opens your browser on the README file that contains instructions for how to run this model.",
 		Active:  egui.ActiveAlways,
 		Func: func() {
-			gi.OpenURL("https://github.com/emer/axon/blob/master/examples/ra25/README.md")
+			gi.OpenURL("https://github.com/emer/axon/blob/master/examples/deep_fsa/README.md")
 		},
 	})
 	ss.GUI.FinalizeGUI(false)
@@ -575,7 +576,6 @@ func (ss *Sim) ConfigGui() *gi.Window {
 func (ss *Sim) ConfigArgs() {
 	ss.Args.Init()
 	ss.Args.AddStd()
-	ss.Args.AddInt("iticycles", 0, "number of cycles to run between trials (inter-trial-interval)")
 	ss.Args.SetInt("epochs", 100)
 	ss.Args.SetInt("runs", 1)
 	ss.Args.Parse() // always parse
