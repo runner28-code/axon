@@ -14,15 +14,14 @@ func _() {
 	// Re-run the stringer command to generate them again.
 	var x [1]struct{}
 	_ = x[CT_-4]
-	_ = x[PT_-5]
-	_ = x[Pulv_-6]
-	_ = x[Thal_-7]
-	_ = x[LayerTypeN-8]
+	_ = x[Pulv_-5]
+	_ = x[TRN_-6]
+	_ = x[LayerTypeN-7]
 }
 
-const _LayerType_name = "CT_PT_Pulv_Thal_LayerTypeN"
+const _LayerType_name = "CT_Pulv_TRN_LayerTypeN"
 
-var _LayerType_index = [...]uint8{0, 3, 6, 11, 16, 26}
+var _LayerType_index = [...]uint8{0, 3, 8, 12, 22}
 
 func (i LayerType) String() string {
 	i -= 4
