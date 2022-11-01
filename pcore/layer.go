@@ -5,7 +5,7 @@
 package pcore
 
 import (
-	"github.com/emer/axon/rl"
+	"github.com/emer/axon/pvlv"
 	"github.com/emer/emergent/emer"
 	"github.com/goki/ki/ki"
 	"github.com/goki/ki/kit"
@@ -19,16 +19,16 @@ import (
 // redundancy here.
 
 // LayerType has the DeepAxon extensions to the emer.LayerType types, for gui
-type LayerType rl.LayerType
+type LayerType pvlv.LayerType
 
 //go:generate stringer -type=LayerType
 
-var KiT_LayerType = kit.Enums.AddEnumExt(rl.KiT_LayerType, LayerTypeN, kit.NotBitFlag, nil)
+var KiT_LayerType = kit.Enums.AddEnumExt(pvlv.KiT_LayerType, LayerTypeN, kit.NotBitFlag, nil)
 
 const (
 	// Matrix are the matrisome medium spiny neurons (MSNs) that are the main
 	// Go / NoGo gating units in BG.
-	Matrix emer.LayerType = emer.LayerType(rl.LayerTypeN) + iota
+	Matrix emer.LayerType = emer.LayerType(pvlv.LayerTypeN) + iota
 
 	// STN is a subthalamic nucleus layer: STNp or STNs
 	STN
@@ -47,7 +47,7 @@ const (
 
 // gui versions
 const (
-	Matrix_ LayerType = LayerType(rl.LayerTypeN) + iota
+	Matrix_ LayerType = LayerType(pvlv.LayerTypeN) + iota
 	STN_
 	GP_
 	Thal_
