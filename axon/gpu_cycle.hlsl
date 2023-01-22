@@ -41,11 +41,10 @@ void NeuronGatherSpikes(in Context ctx, in LayerParams ly, uint ni, uint gni, in
 	for (uint pi = 0; pi < ly.Idxs.RecvN; pi++) {
 		NeuronGatherSpikesPrjn(ctx, ly, RecvPrjns[ly.Idxs.RecvSt + pi], ni, gni, nrn);
 	}
-	
 }
 
-void PulvinarDriver(in LayerParams ly, in LayerParams dly, in LayerVals vals, uint ni, uint gni, out float drvGe, out float nonDrvPct) {
-	float drvMax = vals.ActAvg.CaSpkP.Max;
+void PulvinarDriver(in LayerParams ly, in LayerParams dly, in Pool lpl, uint ni, uint gni, out float drvGe, out float nonDrvPct) {
+	float drvMax = lpl.AvgMax.CaSpkP.Cycle.Max;
 	nonDrvPct = ly.Pulv.NonDrivePct(drvMax); // how much non-driver to keep
 	uint pgni = ni + ly.Idxs.NeurSt;
 	if (dly.LayType == SuperLayer) {
@@ -63,29 +62,30 @@ void GInteg(in Context ctx, in LayerParams ly, uint ni, uint gni, inout Neuron n
 	float drvGe = 0;
 	float nonDrvPct = 0;
 	if (ly.LayType == PulvinarLayer) {
-		PulvinarDriver(ly, Layers[ly.Pulv.DriveLayIdx], LayVals[ly.Pulv.DriveLayIdx], ni, gni, drvGe, nonDrvPct);
+		PulvinarDriver(ly, Layers[ly.Pulv.DriveLayIdx], Pools[Layers[ly.Pulv.DriveLayIdx].Idxs.PoolSt], ni, gni, drvGe, nonDrvPct);
 	}
 
 	float saveVal = ly.SpecialPreGs(ctx, ni, nrn, drvGe, nonDrvPct, randctr);
 	
 	ly.GFmRawSyn(ctx, ni, nrn, randctr);
-	ly.GiInteg(ctx, ni, nrn, pl, vals.ActAvg.GiMult);
+	ly.GiInteg(ctx, ni, nrn, pl, vals);
 	ly.GNeuroMod(ctx, ni, nrn, vals);
 	
 	ly.SpecialPostGs(ctx, ni, nrn, randctr, 0);
 }
 
-void CycleNeuron2(in Context ctx, in LayerParams ly, uint gni, inout Neuron nrn, in Pool pl, in LayerVals vals) {
+void CycleNeuron2(in Context ctx, in LayerParams ly, uint gni, inout Neuron nrn, in Pool pl, in Pool lpl, in LayerVals vals) {
 	uint ni = gni - ly.Idxs.NeurSt; // layer-based as in Go
 	uint2 randctr = ctx.RandCtr.Uint2();
 	
 	GInteg(ctx, ly, ni, gni, nrn, pl, vals, randctr);
 	ly.SpikeFmG(ctx, ni, nrn);
-	ly.PostSpike(ctx, ni, nrn, vals);
+	ly.PostSpikeSpecial(ctx, ni, nrn, pl, lpl, vals);
+	ly.PostSpike(ctx, ni, nrn, pl, vals);
 }
 
 void CycleNeuron(in Context ctx, uint ni, inout Neuron nrn) {
-	CycleNeuron2(ctx, Layers[nrn.LayIdx], ni, nrn, Pools[nrn.SubPoolG], LayVals[nrn.LayIdx]);
+	CycleNeuron2(ctx, Layers[nrn.LayIdx], ni, nrn, Pools[nrn.SubPoolG], Pools[Layers[nrn.LayIdx].Idxs.PoolSt], LayVals[nrn.LayIdx]);
 }
 
 [numthreads(64, 1, 1)]
