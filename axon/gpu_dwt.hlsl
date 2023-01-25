@@ -28,25 +28,25 @@
 // [[vk::binding(2, 2)]] StructuredBuffer<SynIdx> RecvSynIdxs; // [Layer][RecvPrjns][RecvNeurs][Syns]
 // [[vk::binding(3, 2)]] RWStructuredBuffer<PrjnGVals> RecvPrjnGVals; // [Layer][RecvPrjns][RecvNeurs]
 
-void DWtSyn(in Context ctx, uint si, in PrjnParams pj, inout Synapse sy, in Neuron sn, in Neuron rn, bool isTarget) {
-	pj.DWtSyn(ctx, sy, sn, rn, Pools[rn.SubPoolG], isTarget);
+void DWtSyn(in Context ctx, in PrjnParams pj, in Pool layPool, inout Synapse sy, in Neuron sn, in Neuron rn, bool isTarget) {
+	pj.DWtSyn(ctx, sy, sn, rn, layPool, Pools[rn.SubPoolG], isTarget);
 }
 
-void DWtSendNeurSyn2(in Context ctx, uint snsi, in NeurSynIdx nsi, in LayerParams ly, in PrjnParams pj) {
+void DWtSendNeurSyn2(in Context ctx, uint snsi, in NeurSynIdx nsi, in Neuron sn, in LayerParams rlay, in PrjnParams pj) {
 	if(pj.Learn.Learn == 0) {
 		return;
 	}
-	bool isTarget = (ly.Act.Clamp.IsTarget == 1);
+	bool isTarget = (rlay.Act.Clamp.IsTarget == 1);
 	uint nc = nsi.SynN;
 	uint st = nsi.SynSt;
 	for(uint si = 0; si < nc; si++) {
 		uint sia = si + st;
-		DWtSyn(ctx, sia, pj, Synapses[sia], Neurons[nsi.NeurIdx], Neurons[Synapses[sia].RecvNeurIdx], isTarget);
+		DWtSyn(ctx, pj, Pools[rlay.Idxs.PoolSt], Synapses[sia], sn, Neurons[Synapses[sia].RecvNeurIdx], isTarget);
 	}
 }
 
 void DWtSendNeurSyn(in Context ctx, uint snsi, in NeurSynIdx nsi) {
-	DWtSendNeurSyn2(ctx, snsi, nsi, Layers[SendPrjns[nsi.PrjnIdx].Idxs.RecvLay], SendPrjns[nsi.PrjnIdx]);
+	DWtSendNeurSyn2(ctx, snsi, nsi, Neurons[nsi.NeurIdx], Layers[SendPrjns[nsi.PrjnIdx].Idxs.RecvLay], SendPrjns[nsi.PrjnIdx]);
 }
 
 
