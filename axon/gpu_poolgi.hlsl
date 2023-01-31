@@ -5,6 +5,7 @@
 #include "context.hlsl"
 #include "layerparams.hlsl"
 
+// calls SubPoolGiFmSpikes on sub-pools, after poolgemax has been called.
 
 // note: binding is var, set
 
@@ -24,18 +25,9 @@
 // Set 2: prjn, synapse level indexes and buffer values
 // [[vk::binding(0, 2)]] StructuredBuffer<StartN> RecvCon; // [Layer][RecvPrjns][RecvNeurons]
 
-void NeuronsToPool(in Context ctx, uint li, in LayerParams ly, inout Pool pl) {
-	pl.AvgMax.Init();
-	for(uint ni = pl.StIdx; ni < pl.EdIdx; ni++) {
-		ly.GeToPool(ctx, ni, Neurons[ly.Idxs.NeurSt+ni], pl, lpl, subPools);
-		pl.AvgMax.UpdateVals(Neurons[ly.Idxs.NeurSt+ni], int(ni));
-	}
-	pl.AvgMax.CalcAvg();
-}
-
 void PoolGi2(in Context ctx, uint pi, inout Pool pl, in LayerParams ly, float giMult) {
 	if(pl.IsLayPool == 0) {
-		ly.SubPoolGiFmSpikes(ctx, pl, Pools[pl.LayPoolIdx], ly.Inhib.Layer.On == 1, giMult);
+		ly.SubPoolGiFmSpikes(ctx, pl, Pools[ly.Idxs.PoolSt], ly.Inhib.Layer.On == 1, giMult);
 	}
 }
 
