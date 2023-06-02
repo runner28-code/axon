@@ -27,7 +27,7 @@
 // Set 2: main network structs and vals -- all are writable
 [[vk::binding(0, 2)]] RWStructuredBuffer<Context> Ctx; // [0]
 
-[numthreads(1, 1, 1)]
+[numthreads(64, 1, 1)]
 void main(uint3 idx : SV_DispatchThreadID) { // over Context
 	if(idx.x == 0) {
 		Ctx[0].CycleInc();
