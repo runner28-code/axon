@@ -36,11 +36,11 @@ func (cfg *EnvConfig) CurPctCortex(epc int) float32 {
 type ParamConfig struct {
 	Network map[string]any `desc:"network parameters"`
 	Sheet   string         `desc:"Extra Param Sheet name(s) to use (space separated if multiple) -- must be valid name as listed in compiled-in params or loaded params"`
-	File    string         `desc:"Name of the JSON file to input saved parameters from."`
 	Tag     string         `desc:"extra tag to add to file names and logs saved from this run"`
 	Note    string         `desc:"user note -- describe the run params etc -- like a git commit message for the run"`
-	SaveAll bool           `desc:"Save a snapshot of all current param and config settings in a directory named params_<datestamp> (or _good if Good is true), then quit -- useful for comparing to later changes and seeing multiple views of current params"`
-	Good    bool           `desc:"for SaveAll, save to params_good for a known good params state.  This can be done prior to making a new release after all tests are passing -- add results to git to provide a full diff record of all params over time."`
+	File    string         `nest:"+" desc:"Name of the JSON file to input saved parameters from."`
+	SaveAll bool           `nest:"+" desc:"Save a snapshot of all current param and config settings in a directory named params_<datestamp> (or _good if Good is true), then quit -- useful for comparing to later changes and seeing multiple views of current params"`
+	Good    bool           `nest:"+" desc:"for SaveAll, save to params_good for a known good params state.  This can be done prior to making a new release after all tests are passing -- add results to git to provide a full diff record of all params over time."`
 }
 
 // RunConfig has config parameters related to running the sim
@@ -58,10 +58,9 @@ type RunConfig struct {
 // LogConfig has config parameters related to logging data
 type LogConfig struct {
 	SaveWts bool `desc:"if true, save final weights after each run"`
-	Epoch   bool `def:"true" desc:"if true, save train epoch log to file, as .epc.tsv typically"`
-	Run     bool `def:"true" desc:"if true, save run log to file, as .run.tsv typically"`
-	Trial   bool `def:"false" desc:"if true, save train trial log to file, as .trl.tsv typically. May be large."`
-	NetData bool `desc:"if true, save network activation etc data from testing trials, for later viewing in netview"`
+	Epoch   bool `def:"true" nest:"+" desc:"if true, save train epoch log to file, as .epc.tsv typically"`
+	Run     bool `def:"true" nest:"+" desc:"if true, save run log to file, as .run.tsv typically"`
+	Trial   bool `def:"false" nest:"+" desc:"if true, save train trial log to file, as .trl.tsv typically. May be large."`
 	Testing bool `desc:"activates testing mode -- records detailed data for Go CI tests (not the same as running test mode on network, via Looper)"`
 }
 
