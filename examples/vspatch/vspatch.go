@@ -3,7 +3,7 @@
 // license that can be found in the LICENSE file.
 
 /*
-pcore_vs: This project simulates the inhibitory dynamics in the STN and GPe leading to integration of Go vs. NoGo signal in the basal ganglia, for the Ventral Striatum (VS) global Go vs. No case.
+vspatch: This project simulates the Ventral Striatum (VS) Patch (striosome) neurons that predict reward to generate an RPE (reward prediction error).  It is a testbed for learning the quantitative value representations needed for this.
 */
 package main
 
