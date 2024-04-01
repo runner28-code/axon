@@ -1,10 +1,10 @@
 Includes = []
-GUI = true
+GUI = false
 Debug = false
 
 [Env]
   SeqLen = 4
-  NActions = 5
+  NActions = 4
   ActSoftMaxGain = 2.0
 
 [Params]
