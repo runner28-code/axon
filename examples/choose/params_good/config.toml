@@ -4,9 +4,9 @@ Debug = false
 OpenWts = ''
 
 [Env]
-  Config = ''
+  Config = '01_us_magnitude.toml'
   NDrives = 4
-  PctCortexStEpc = 10
+  PctCortexStEpc = 50
   PctCortexNEpc = 1
   PctCortex = 0.0
   SameSeed = false
@@ -20,27 +20,17 @@ OpenWts = ''
   Good = true
 
 [Run]
-  GPU = true
-  NData = 16
+  GPU = false
+  NData = 8
   NThreads = 0
   Run = 0
   NRuns = 5
-  NEpochs = 100
+  NEpochs = 50
   NTrials = 128
   NCycles = 300
   PCAInterval = 10
 
 [Log]
-  AggStats = [
-    'Rew_R',
-    'DA_R',
-    'RewPred_R',
-    'VtaDA',
-    'PVposEst',
-    'PVnegEst',
-    'PVposVar',
-    'PVnegVar'
-  ]
   SaveWts = false
   Epoch = true
   Run = true
