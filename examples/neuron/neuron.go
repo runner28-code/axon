@@ -420,10 +420,12 @@ func (ss *Sim) ConfigGUI() {
 			Active:  egui.ActiveStopped,
 			Func: func() {
 				if !ss.GUI.IsRunning {
-					ss.GUI.IsRunning = true
-					ss.RunCycles()
-					ss.GUI.IsRunning = false
-					ss.GUI.UpdateWindow()
+					go func() {
+						ss.GUI.IsRunning = true
+						ss.RunCycles()
+						ss.GUI.IsRunning = false
+						ss.GUI.UpdateWindow()
+					}()
 				}
 			},
 		})
