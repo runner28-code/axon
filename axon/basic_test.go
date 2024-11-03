@@ -204,7 +204,7 @@ func TestSpikeProp(t *testing.T) {
 	inLay := net.AddLayer("Input", InputLayer, 1, 1)
 	hidLay := net.AddLayer("Hidden", SuperLayer, 1, 1)
 
-	prj := net.ConnectLayers(inLay, hidLay, paths.NewOneToOne(), ForwardPath)
+	pt := net.ConnectLayers(inLay, hidLay, paths.NewOneToOne(), ForwardPath)
 
 	ctx := NewContext()
 
@@ -218,9 +218,9 @@ func TestSpikeProp(t *testing.T) {
 	pat.Set(1, 0, 0)
 
 	for del := 0; del <= 4; del++ {
-		prj.Params.Com.Delay = uint32(del)
-		prj.Params.Com.MaxDelay = uint32(del) // now need to ensure that >= Delay
-		net.InitWeights(ctx)                  // resets Gbuf
+		pt.Params.Com.Delay = uint32(del)
+		pt.Params.Com.MaxDelay = uint32(del) // now need to ensure that >= Delay
+		net.InitWeights(ctx)                 // resets Gbuf
 		net.NewState(ctx)
 
 		inLay.ApplyExt(ctx, 0, pat)
@@ -233,13 +233,15 @@ func TestSpikeProp(t *testing.T) {
 		for cyc := 0; cyc < 100; cyc++ {
 			net.Cycle()
 			ctx.CycleInc()
-
+			// fmt.Println(cyc, Neurons[Ge, hidLay.NeurStIndex, 0], Neurons[GeRaw, hidLay.NeurStIndex, 0])
 			if Neurons.Value(int(Spike), int(inLay.NeurStIndex), int(0)) > 0 {
+				// fmt.Println("in spike:", cyc)
 				inCyc = cyc
 			}
 
 			ge := Neurons.Value(int(Ge), int(hidLay.NeurStIndex), int(0))
 			if ge > 0 {
+				// fmt.Println("hid recv:", cyc, ge)
 				hidCyc = cyc
 				break
 			}
