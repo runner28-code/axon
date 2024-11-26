@@ -755,7 +755,8 @@ fn PathParams_WtFromDWtSynNoLimits(pt: ptr<function,PathParams>, ctx: ptr<functi
 		Synapses[IndexF322D(Synapses[0], Synapses[1], u32(syni),u32(Wt))] = 0.0;
 	}
 	Synapses[IndexF322D(Synapses[0], Synapses[1], u32(syni),u32(LWt))] = Synapses[IndexF322D(Synapses[0], Synapses[1], u32(syni),u32(Wt))];
-	Synapses[IndexF322D(Synapses[0], Synapses[1], u32(syni),u32(DWt))] = 0.0;
+	Synapses[IndexF322D(Synapses[0], Synapses[1],
+	u32(syni),u32(DWt))] = 0.0;
 }
 
 ///////////// import: "learn.go"
