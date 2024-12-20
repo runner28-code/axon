@@ -238,8 +238,8 @@ func (ss *Sim) StatsInit() {
 // ConfigStats handles configures functions to do all stats computation
 // in the tensorfs system.
 func (ss *Sim) ConfigStats() {
-	ss.Stats, _ = ss.Root.Mkdir("Stats")
-	ss.Current, _ = ss.Stats.Mkdir("Current")
+	ss.Stats = ss.Root.Dir("Stats")
+	ss.Current = ss.Stats.Dir("Current")
 
 	ss.SetRunName()
 
@@ -255,9 +255,9 @@ func (ss *Sim) ConfigStats() {
 			name := sv.Path
 			kind := sv.Field.Type.Kind()
 			isNumber := reflectx.KindIsNumber(kind)
-			modeDir := ss.Stats.RecycleDir(mode.String())
-			curModeDir := ss.Current.RecycleDir(mode.String())
-			levelDir := modeDir.RecycleDir(level.String())
+			modeDir := ss.Stats.Dir(mode.String())
+			curModeDir := ss.Current.Dir(mode.String())
+			levelDir := modeDir.Dir(level.String())
 			tsr := tensorfs.ValueType(levelDir, name, kind)
 			if phase == Start {
 				tsr.SetNumRows(0)
@@ -300,7 +300,7 @@ func (ss *Sim) ConfigStats() {
 				}
 			default:
 				if isNumber {
-					subDir := modeDir.RecycleDir((level - 1).String())
+					subDir := modeDir.Dir((level - 1).String())
 					stat := stats.StatMean.Call(subDir.Value(name)).Float1D(0)
 					tsr.AppendRowFloat(stat)
 				}

@@ -384,7 +384,7 @@ func (ss *Sim) ConfigLoops() {
 func (ss *Sim) ApplyInputs(mode Modes, trial, theta int) {
 	net := ss.Net
 	ndata := int(net.Context().NData)
-	curModeDir := ss.Current.RecycleDir(mode.String())
+	curModeDir := ss.Current.Dir(mode.String())
 	lays := []string{"ACCPos", "ACCNeg"}
 	net.InitExt()
 	for di := range ndata {
@@ -452,7 +452,7 @@ func (ss *Sim) SetRew(rew float32, di uint32) {
 // so that the reward is present during the final trial when learning occurs.
 func (ss *Sim) GatedAction(mode Modes) {
 	ctx := ss.Net.Context()
-	curModeDir := ss.Current.RecycleDir(mode.String())
+	curModeDir := ss.Current.Dir(mode.String())
 	mtxly := ss.Net.LayerByName("VMtxGo")
 	vmly := ss.Net.LayerByName("ACCPosVM")
 	vmlpi := vmly.Params.PoolIndex(0)
@@ -576,8 +576,8 @@ func (ss *Sim) StatsInit() {
 // in the tensorfs system.
 func (ss *Sim) ConfigStats() {
 	net := ss.Net
-	ss.Stats, _ = ss.Root.Mkdir("Stats")
-	ss.Current, _ = ss.Stats.Mkdir("Current")
+	ss.Stats = ss.Root.Dir("Stats")
+	ss.Current = ss.Stats.Dir("Current")
 
 	ss.SetRunName()
 
@@ -604,10 +604,10 @@ func (ss *Sim) ConfigStats() {
 	statNames := []string{"ACCPos", "ACCNeg", "Gated", "Should", "Match", "Rew", "ACCPosVM_RT", "ACCPosVM_ActAvg", "VMtxGo_ActAvg"}
 	ss.AddStat(func(mode Modes, level Levels, phase StatsPhase) {
 		for si, name := range statNames {
-			modeDir := ss.Stats.RecycleDir(mode.String())
-			curModeDir := ss.Current.RecycleDir(mode.String())
-			levelDir := modeDir.RecycleDir(level.String())
-			subDir := modeDir.RecycleDir((level - 1).String()) // note: will fail for Cycle
+			modeDir := ss.Stats.Dir(mode.String())
+			curModeDir := ss.Current.Dir(mode.String())
+			levelDir := modeDir.Dir(level.String())
+			subDir := modeDir.Dir((level - 1).String()) // note: will fail for Cycle
 			tsr := levelDir.Float64(name)
 			ndata := int(ss.Net.Context().NData)
 			var stat float64
@@ -657,7 +657,7 @@ func (ss *Sim) ConfigStats() {
 				}
 				stats.GroupStats(curModeDir, stats.StatMean, subDir.Value(name))
 				// note: results go under Group name: TrialName
-				gp := curModeDir.RecycleDir("Stats/TrialName/" + name).Value("Mean")
+				gp := curModeDir.Dir("Stats/TrialName/" + name).Value("Mean")
 				plot.SetFirstStylerTo(gp, func(s *plot.Style) {
 					if si >= 2 && si <= 3 {
 						s.On = true
@@ -665,11 +665,11 @@ func (ss *Sim) ConfigStats() {
 				})
 				if si == len(statNames)-1 {
 					nrows := gp.DimSize(0)
-					row := curModeDir.RecycleDir("Stats").Int("Row", nrows)
+					row := curModeDir.Dir("Stats").Int("Row", nrows)
 					for i := range nrows {
 						row.Set(i, i)
 					}
-					ss.GUI.Tabs.PlotTensorFS(curModeDir.RecycleDir("Stats"))
+					ss.GUI.Tabs.PlotTensorFS(curModeDir.Dir("Stats"))
 				}
 			case Run:
 				stat = stats.StatMean.Call(subDir.Value(name)).Float1D(0)
@@ -688,7 +688,7 @@ func (ss *Sim) StatCounters(mode, level enums.Enum) string {
 	}
 	di := vu.View.Di
 	counters += fmt.Sprintf(" Di: %d", di)
-	curModeDir := ss.Current.RecycleDir(mode.String())
+	curModeDir := ss.Current.Dir(mode.String())
 	if curModeDir.Node("TrialName") == nil {
 		return counters
 	}
