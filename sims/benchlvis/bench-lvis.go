@@ -7,7 +7,7 @@
 // models for actual applications (e.g., large models tend to have much more topographic
 // patterns of connectivity and larger layers with fewer connections), but they are
 // easy to run..
-package bench
+package benchlvis
 
 import (
 	"fmt"

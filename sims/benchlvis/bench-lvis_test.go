@@ -1,4 +1,4 @@
-package bench
+package benchlvis
 
 import (
 	"flag"
