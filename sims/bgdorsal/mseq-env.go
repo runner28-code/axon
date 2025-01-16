@@ -34,14 +34,17 @@ type MotorSeqEnv struct {
 	// number of distinct actions represented: determines the difficulty
 	// of learning in terms of the size of the space that must be searched.
 	// effective size = NActions ^ SeqLen
-	// 4 ^ 3 = 64 or 7 ^2 = 49 are reliably solved
+	// 4^4 = 256 or 10^3 = 1000 are reliably solved
 	NActions int
 
 	// learning rate for reward prediction
-	RewPredLRate float32
+	RewPredLRate float32 `default:"0.01"`
+
+	// additional learning rate factor for going up vs. down -- going up slower is better?
+	RewPredLRateUp float32 `default:"0.5"` // 0.5 > 0.8 > 0.2 > 1
 
 	// minimum rewpred value
-	RewPredMin float32
+	RewPredMin float32 `default:"0.1"`
 
 	//	give reward with probability in proportion to number of
 	// correct actions in sequence, above given threshold.  If 0, don't use
@@ -104,7 +107,8 @@ func (ev *MotorSeqEnv) Defaults() {
 	ev.PartialCreditAt = 1  // 1 default: critical for seq len = 3
 	ev.PartialGraded = true // key for seq 3
 	ev.RewPredLRate = 0.01  // GPU 16 0.01 > 0.02 >> 0.05 > 0.1, 0.2 for partial, seq3
-	ev.RewPredMin = 0.1     // 0.1 > 0.05 > 0.2
+	ev.RewPredLRateUp = 1
+	ev.RewPredMin = 0.1 // 0.1 > 0.05 > 0.2
 	ev.NUnitsPer = 5
 	ev.NUnits = ev.NUnitsPer * ev.NActions
 }
@@ -246,7 +250,11 @@ func (ev *MotorSeqEnv) ComputeReward() {
 		}
 	}
 	ev.RPE = ev.Rew - ev.RewPred
-	ev.RewPred += ev.RewPredLRate * (ev.Rew - ev.RewPred)
+	if ev.RPE > 0 {
+		ev.RewPred += ev.RewPredLRateUp * ev.RewPredLRate * ev.RPE
+	} else {
+		ev.RewPred += ev.RewPredLRate * ev.RPE
+	}
 	if ev.RewPred < ev.RewPredMin {
 		ev.RewPred = ev.RewPredMin
 	}
