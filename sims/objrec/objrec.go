@@ -229,8 +229,8 @@ func (ss *Sim) ConfigNet(net *axon.Network) {
 	it := net.AddLayer2D("IT", axon.SuperLayer, 16, 16)       // 16x16 == 20x20 > 10x10 (orig, 16, 16)
 	out := net.AddLayer4D("Output", axon.TargetLayer, 4, 5, ss.Config.Env.NOutPer, 1)
 
-	v1.SetSampleIndexesShape(emer.CenterPoolIndexes(v1, 2), emer.CenterPoolShape(v1, 2))
-	v4.SetSampleIndexesShape(emer.CenterPoolIndexes(v4, 2), emer.CenterPoolShape(v4, 2))
+	v1.SetSampleShape(emer.CenterPoolIndexes(v1, 2), emer.CenterPoolShape(v1, 2))
+	v4.SetSampleShape(emer.CenterPoolIndexes(v4, 2), emer.CenterPoolShape(v4, 2))
 
 	full := paths.NewFull()
 	_ = full
