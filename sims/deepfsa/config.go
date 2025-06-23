@@ -142,10 +142,10 @@ type LogConfig struct {
 type Config struct {
 
 	// Name is the short name of the sim.
-	Name string `display:"-" default:"DeepFSA"`
+	Name string `display:"-" default:"FSA"`
 
 	// Title is the longer title of the sim.
-	Title string `display:"-" default:"DeepAxon Finite State Automaton"`
+	Title string `display:"-" default:"Finite State Automaton"`
 
 	// URL is a link to the online README or other documentation for this sim.
 	URL string `display:"-" default:"https://github.com/emer/axon/blob/main/sims/deep_fsa/README.md"`

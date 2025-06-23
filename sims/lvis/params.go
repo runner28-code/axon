@@ -21,10 +21,11 @@ var LayerParams = axon.LayerSheets{
 				ly.Inhib.Pool.FB = 1
 				ly.Inhib.Layer.ClampExtMin = 0.0 // 0.05 default doesn't activate output!
 				ly.Inhib.Pool.ClampExtMin = 0.0
-				ly.Inhib.ActAvg.AdaptRate = 0.05 // was 0.1 -- got fluctations
-				ly.Inhib.ActAvg.AdaptMax = 0.01  // 0.05 default; 0.01 has effect; lower not effective at preventing instability on its own.
+				ly.Inhib.ActAvg.AdaptRate = 0.005 // was 0.1 -- got fluctations
+				ly.Inhib.ActAvg.AdaptMax = 0.01   // 0.05 default; 0.01 has effect; lower not effective at preventing instability on its own.
 				ly.Inhib.ActAvg.LoTol = 0.8
 				ly.Inhib.ActAvg.HiTol = 0.0
+				ly.Acts.Dt.LongAvgTau = 200 // 200 > 20 for smoothing ripples
 
 				ly.Acts.Decay.Act = 0.0   // 0 == .2
 				ly.Acts.Decay.Glong = 0.6 // 0.6 def
@@ -45,7 +46,7 @@ var LayerParams = axon.LayerSheets{
 				ly.Acts.Sahp.Off = 0.8       //
 				ly.Acts.Sahp.Slope = 0.02    //
 				ly.Acts.Sahp.CaTau = 5       // 5 ok -- not tested
-				ly.Acts.KNa.On.SetBool(true) // false > true
+				ly.Acts.KNa.On.SetBool(true) // true, .05 > false
 				ly.Acts.KNa.Med.Max = 0.05   // 0.1 > 0.05 -- 0.05 blows up around 1500
 				ly.Acts.KNa.Slow.Max = 0.05
 
@@ -197,7 +198,7 @@ var PathParams = axon.PathSheets{
 				pt.Learn.DWt.SubMean = 1           // 1 > 0 for trgavg weaker
 				pt.Learn.DWt.CaPScale = 1          // Env10: 1
 				pt.Learn.DWt.SynCa20.SetBool(false)
-				pt.Learn.DWt.LearnThr = 0 // 0.001 still shows impairment
+				pt.Learn.DWt.LearnThr = 0 // even 0.01 with v32 fails after 150 or so -- lower max activity levels throughout the net
 			}},
 		{Sel: ".BackPath", Doc: "top-down back-projections MUST have lower relative weight scale, otherwise network hallucinates -- smaller as network gets bigger",
 			Set: func(pt *axon.PathParams) {

@@ -21,11 +21,21 @@ import (
 // Img manages conversion of a bitmap image into tensor formats for
 // subsequent processing by filters.
 type V1Img struct {
-	File core.Filename  `desc:"name of image file to operate on"`
-	Size image.Point    `desc:"target image size to use -- images will be rescaled to this size"`
-	Img  image.Image    `view:"-" desc:"current input image"`
-	Tsr  tensor.Float32 `view:"no-inline" desc:"input image as an RGB tensor"`
-	LMS  tensor.Float32 `view:"no-inline" desc:"LMS components + opponents tensor version of image"`
+
+	// name of image file to operate on
+	File core.Filename
+
+	// target image size to use -- images will be rescaled to this size
+	Size image.Point
+
+	// current input image
+	Img image.Image `display:"-"`
+
+	// input image as an RGB tensor
+	Tsr tensor.Float32 `display:"no-inline"`
+
+	// LMS components + opponents tensor version of image
+	LMS tensor.Float32 `display:"no-inline"`
 }
 
 func (vi *V1Img) Defaults() {
@@ -50,35 +60,84 @@ func (vi *V1Img) SetImage(img image.Image, filtsz int) {
 	// vi.Tsr.SetMetaData("min", "0")
 }
 
-// V1sOut contains output tensors for V1 Simple filtering, one per opponnent
+// V1sOut contains output tensors for V1 Simple filtering, one per opponnent.
 type V1sOut struct {
-	Tsr      tensor.Float32 `view:"no-inline" desc:"V1 simple gabor filter output tensor"`
-	ExtGiTsr tensor.Float32 `view:"no-inline" desc:"V1 simple extra Gi from neighbor inhibition tensor"`
-	KwtaTsr  tensor.Float32 `view:"no-inline" desc:"V1 simple gabor filter output, kwta output tensor"`
-	PoolTsr  tensor.Float32 `view:"no-inline" desc:"V1 simple gabor filter output, max-pooled 2x2 of Kwta tensor"`
+
+	// V1 simple gabor filter output tensor
+	Tsr tensor.Float32 `display:"no-inline"`
+
+	// V1 simple extra Gi from neighbor inhibition tensor
+	ExtGiTsr tensor.Float32 `display:"no-inline"`
+
+	// V1 simple gabor filter output, kwta output tensor
+	KwtaTsr tensor.Float32 `display:"no-inline"`
+
+	//  V1 simple gabor filter output, max-pooled 2x2 of Kwta tensor
+	PoolTsr tensor.Float32 `display:"no-inline"`
 }
 
 // Vis encapsulates specific visual processing pipeline for V1 filtering
 type Vis struct {
-	Color         bool                          `desc:"if true, do full color filtering -- else Black/White only"`
-	SepColor      bool                          `desc:"record separate rows in V1s summary for each color -- otherwise just records the max across all colors"`
-	ColorGain     float32                       `def:"8" desc:"extra gain for color channels -- lower contrast in general"`
-	Img           *V1Img                        `desc:"image that we operate upon -- one image often shared among multiple filters"`
-	V1sGabor      gabor.Filter                  `view:"inline" desc:"V1 simple gabor filter parameters"`
-	V1sGeom       vfilter.Geom                  `inactive:"+" view:"inline" desc:"geometry of input, output for V1 simple-cell processing"`
-	V1sNeighInhib kwta.NeighInhib               `desc:"neighborhood inhibition for V1s -- each unit gets inhibition from same feature in nearest orthogonal neighbors -- reduces redundancy of feature code"`
-	V1sKWTA       kwta.KWTA                     `desc:"kwta parameters for V1s"`
-	V1sGaborTsr   tensor.Float32                `view:"no-inline" desc:"V1 simple gabor filter tensor"`
-	V1s           [colorspace.OpponentsN]V1sOut `view:"inline" desc:"V1 simple gabor filter output, per channel"`
-	V1sMaxTsr     tensor.Float32                `view:"no-inline" desc:"max over V1 simple gabor filters output tensor"`
-	V1sPoolTsr    tensor.Float32                `view:"no-inline" desc:"V1 simple gabor filter output, max-pooled 2x2 of V1sKwta tensor"`
-	V1sUnPoolTsr  tensor.Float32                `view:"no-inline" desc:"V1 simple gabor filter output, un-max-pooled 2x2 of V1sPool tensor"`
-	V1sAngOnlyTsr tensor.Float32                `view:"no-inline" desc:"V1 simple gabor filter output, angle-only features tensor"`
-	V1sAngPoolTsr tensor.Float32                `view:"no-inline" desc:"V1 simple gabor filter output, max-pooled 2x2 of AngOnly tensor"`
-	V1cLenSumTsr  tensor.Float32                `view:"no-inline" desc:"V1 complex length sum filter output tensor"`
-	V1cEndStopTsr tensor.Float32                `view:"no-inline" desc:"V1 complex end stop filter output tensor"`
-	V1AllTsr      tensor.Float32                `view:"no-inline" desc:"Combined V1 output tensor with V1s simple as first two rows, then length sum, then end stops = 5 rows total (9 if SepColor)"`
-	V1sInhibs     fffb.Inhibs                   `view:"no-inline" desc:"inhibition values for V1s KWTA"`
+
+	// Record separate rows in V1s summary for each color.
+	// otherwise just records the max across all colors
+	SepColor bool `default:"false"`
+
+	// if true, do full color filtering -- else Black/White only
+	Color bool `default:"true"`
+
+	// extra gain for color channels -- lower contrast in general"`
+	ColorGain float32 `default:"8"`
+
+	// image that we operate upon -- one image often shared among multiple filters
+	Img *V1Img
+
+	// V1 simple gabor filter parameters
+	V1sGabor gabor.Filter `display:"inline"`
+
+	// geometry of input, output for V1 simple-cell processing
+	V1sGeom vfilter.Geom `edit:"-" display:"inline"`
+
+	// Neighborhood inhibition for V1s. Each unit gets inhibition from same
+	// feature in nearest orthogonal neighbors -- reduces redundancy of feature code.
+	V1sNeighInhib kwta.NeighInhib
+
+	// kwta parameters for V1s
+	V1sKWTA kwta.KWTA
+
+	// V1 simple gabor filter tensor
+	V1sGaborTsr tensor.Float32 `display:"no-inline"`
+
+	// V1 simple gabor filter output, per channel
+	V1s [colorspace.OpponentsN]V1sOut `display:"inline"`
+
+	// max over V1 simple gabor filters output tensor
+	V1sMaxTsr tensor.Float32 `display:"no-inline"`
+
+	// V1 simple gabor filter output, max-pooled 2x2 of V1sKwta tensor
+	V1sPoolTsr tensor.Float32 `display:"no-inline"`
+
+	// V1 simple gabor filter output, un-max-pooled 2x2 of V1sPool tensor
+	V1sUnPoolTsr tensor.Float32 `display:"no-inline"`
+
+	// V1 simple gabor filter output, angle-only features tensor
+	V1sAngOnlyTsr tensor.Float32 `display:"no-inline"`
+
+	// V1 simple gabor filter output, max-pooled 2x2 of AngOnly tensor
+	V1sAngPoolTsr tensor.Float32 `display:"no-inline"`
+
+	// V1 complex length sum filter output tensor
+	V1cLenSumTsr tensor.Float32 `display:"no-inline"`
+
+	// V1 complex end stop filter output tensor
+	V1cEndStopTsr tensor.Float32 `display:"no-inline"`
+
+	// Combined V1 output tensor with V1s simple as first two rows,
+	// then length sum, then end stops = 5 rows total.
+	V1AllTsr tensor.Float32 `display:"no-inline"`
+
+	// inhibition values for V1s KWTA
+	V1sInhibs fffb.Inhibs `display:"no-inline"`
 }
 
 // Defaults sets default values: high: sz = 12, spc = 4, med: sz = 24, spc = 8

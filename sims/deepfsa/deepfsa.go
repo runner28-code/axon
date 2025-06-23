@@ -696,7 +696,7 @@ func (ss *Sim) ConfigNetView(nv *netview.NetView) {
 		lbl.Pose = ly.Pose
 		lbl.Pose.Pos.Y += .2
 		lbl.Pose.Pos.Z += .02
-		lbl.Pose.Pos.X += 0.05 + float32(li)*.06
+		lbl.Pose.Pos.X += 0.05 + float32(li)*.045
 		lbl.Pose.Scale.SetMul(math32.Vec3(0.6, 0.4, 0.5))
 	}
 }
