@@ -39,7 +39,7 @@ NOTE: aspects of above instinct behavior is still TODO!
 
 **Figure 4:** Chernysheva et al. (2021) sequential PFC activity over a delay period, characteristic of CT neurons -- though these are actually PT neurons.
 
-See [O'Reilly, 2020](https://ccnlab.org/papers/OReilly20.pdf) for more info about data and theory, and [github Discussion #56](https://github.com/emer/axon/discussions/56) for more detailed notes and data consulted in the process of developing this model.
+See [O'Reilly, 2020](https://ccnlab.org/papers/OReilly20.pdf) for more info about data and theory, and [github Discussion #56](https://github.com/runner28-code/axon/discussions/56) for more detailed notes and data consulted in the process of developing this model.
 
 ## Dopamine System and Reinforcement Learning
 

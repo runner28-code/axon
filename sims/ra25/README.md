@@ -4,13 +4,13 @@ This example project serves as a demo and basic template for Axon models -- you 
 
 # Running the model
 
-First, see [Wiki Install](https://github.com/emer/axon/wiki/Install) for installation instructions, which includes how to build the model code in this directory, which will make an executable named `ra25` that you run from a terminal command line:
+First, see [Wiki Install](https://github.com/runner28-code/axon/wiki/Install) for installation instructions, which includes how to build the model code in this directory, which will make an executable named `ra25` that you run from a terminal command line:
 
 ```bash
 ./ra25
 ```
 
-You can also run the [Python](https://github.com/emer/axon/blob/main/python/README.md) version of the model by following those instructions.
+You can also run the [Python](https://github.com/runner28-code/axon/blob/main/python/README.md) version of the model by following those instructions.
 
 ## Basic running and graphing
 

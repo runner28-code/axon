@@ -14,7 +14,7 @@ Remarkably, the parameters that work to enable successful error-driven learning 
 
 ![FS-FFFB vs original FFFB](fig_fs_vs_orig_fffb_layer2.png?raw=true "FS-FFFB vs original FFFB")
 
-**Figure 1:** Comparison of original FFFB inhibition (`OGi`) vs. new FS-FFFB inhibition (`SGi`) from the [inhib](https://github.com/emer/axon/tree/examples/inhib) example simulation, showing that the FS-FFFB parameters that enable successful learning produce nearly identical overall levels of inhibition compared to the original.  `Act.Avg` shows the time-averaged activity in the lower layer that feeds into the one shown, and resembles the slow SST response, while the jagged ups and downs are due to the fast PV component.
+**Figure 1:** Comparison of original FFFB inhibition (`OGi`) vs. new FS-FFFB inhibition (`SGi`) from the [inhib](https://github.com/runner28-code/axon/tree/examples/inhib) example simulation, showing that the FS-FFFB parameters that enable successful learning produce nearly identical overall levels of inhibition compared to the original.  `Act.Avg` shows the time-averaged activity in the lower layer that feeds into the one shown, and resembles the slow SST response, while the jagged ups and downs are due to the fast PV component.
 
 # PV is fast and highly chaotic
 
